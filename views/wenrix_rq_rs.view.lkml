@@ -44,16 +44,16 @@ view: wenrix_rq_rs {
 
   dimension_group: created {
     type: time
-    timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
+    timeframes: [raw, date, week, month, quarter, year]
     sql: ${TABLE}.created_at ;;
     label: "1. Basic | Created"
     description: "Group of time-based dimensions for created_at"
   }
-  
+
   # -------------------------
   # 2. Request JSON dimensions
   # -------------------------
- 
+
   dimension: request_branch {
     type: string
     sql: JSONExtractString(${TABLE}.request, 'branch') ;;
@@ -85,7 +85,7 @@ view: wenrix_rq_rs {
   # -------------------------
   # 3. Response JSON dimensions - Meta fields
   # -------------------------
-  
+
   dimension: response_request_id {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'request_id') ;;
@@ -102,7 +102,7 @@ view: wenrix_rq_rs {
 
   dimension_group: response_timestamp {
     type: time
-    timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
+    timeframes: [raw, date, week, month, quarter, year]
     sql: parseDateTimeBestEffort(JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'timestamp')) ;;
     label: "3. Response Meta | Timestamp"
     description: "Timestamp from response meta"
@@ -111,7 +111,7 @@ view: wenrix_rq_rs {
   # -------------------------
   # 4. Response JSON dimensions - Success response fields
   # -------------------------
-  
+
   dimension: response_booking_reference {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'booking_reference') ;;
@@ -156,7 +156,7 @@ view: wenrix_rq_rs {
 
   dimension_group: response_expires_at {
     type: time
-    timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
+    timeframes: [raw, date, week, month, quarter, year]
     sql: parseDateTimeBestEffort(JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'expires_at')) ;;
     label: "4. Response Success | Expires At"
     description: "Expiration date/time of the quote from successful response"
@@ -288,4 +288,3 @@ view: wenrix_rq_rs {
   }
 
 }
-
