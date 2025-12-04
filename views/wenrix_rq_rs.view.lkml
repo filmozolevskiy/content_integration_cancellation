@@ -113,7 +113,7 @@ view: wenrix_rq_rs {
 
   dimension_group: response_timestamp {
     type: time
-    timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
+    timeframes: [raw, date, week, month, quarter, year]
     sql: parseDateTimeBestEffort(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'meta'), 'timestamp')) ;;
     group_label: "3. Response Meta Dimensions"
     label: "Timestamp"
@@ -174,7 +174,7 @@ view: wenrix_rq_rs {
 
   dimension_group: response_expires_at {
     type: time
-    timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
+    timeframes: [raw, date, week, month, quarter, year]
     sql: parseDateTimeBestEffort(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'data'), 'expires_at')) ;;
     group_label: "4. Response Success Dimensions"
     label: "Expires At"
