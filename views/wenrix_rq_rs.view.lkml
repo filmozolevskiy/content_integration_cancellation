@@ -17,28 +17,32 @@ view: wenrix_rq_rs {
   dimension: operation {
     type: string
     sql: ${TABLE}.operation ;;
-    label: "1. Basic | Operation"
+    group_label: "1. Basic Dimensions"
+    label: "Operation"
     description: "The operation type performed (e.g., cancellation quote request)"
   }
 
   dimension: result {
     type: string
     sql: ${TABLE}.result ;;
-    label: "1. Basic | Result"
+    group_label: "1. Basic Dimensions"
+    label: "Result"
     description: "The result of the operation (e.g., success, error)"
   }
 
   dimension: is_success {
     type: yesno
     sql: ${result} = 'success' ;;
-    label: "1. Basic | Is Success"
+    group_label: "1. Basic Dimensions"
+    label: "Is Success"
     description: "Whether the operation was successful"
   }
 
   dimension: is_error {
     type: yesno
     sql: ${result} = 'error' ;;
-    label: "1. Basic | Is Error"
+    group_label: "1. Basic Dimensions"
+    label: "Is Error"
     description: "Whether the operation resulted in an error"
   }
 
@@ -46,7 +50,8 @@ view: wenrix_rq_rs {
     type: time
     timeframes: [raw, date, week, month, quarter, year]
     sql: ${TABLE}.created_at ;;
-    label: "1. Basic | Created"
+    group_label: "1. Basic Dimensions"
+    label: "Created"
     description: "Group of time-based dimensions for created_at"
   }
 
@@ -57,28 +62,32 @@ view: wenrix_rq_rs {
   dimension: request_branch {
     type: string
     sql: JSONExtractString(${TABLE}.request, 'branch') ;;
-    label: "2. Request | Branch"
+    group_label: "2. Request Dimensions"
+    label: "Branch"
     description: "Branch code from the request"
   }
 
   dimension: request_source {
     type: string
     sql: JSONExtractString(${TABLE}.request, 'source') ;;
-    label: "2. Request | Source"
+    group_label: "2. Request Dimensions"
+    label: "Source"
     description: "Source system from the request (e.g., amadeus)"
   }
 
   dimension: request_booking_reference {
     type: string
     sql: JSONExtractString(${TABLE}.request, 'booking_reference') ;;
-    label: "2. Request | Booking Reference"
+    group_label: "2. Request Dimensions"
+    label: "Booking Reference"
     description: "Booking reference from the request"
   }
 
   dimension: request_internal_id {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.request, 'labels'), 'internal_id') ;;
-    label: "2. Request | Internal ID"
+    group_label: "2. Request Dimensions"
+    label: "Internal ID"
     description: "Internal booking ID from request labels"
   }
 
@@ -89,14 +98,16 @@ view: wenrix_rq_rs {
   dimension: response_request_id {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'request_id') ;;
-    label: "3. Response Meta | Request ID"
+    group_label: "3. Response Meta Dimensions"
+    label: "Request ID"
     description: "Request ID from response meta"
   }
 
   dimension: response_status {
     type: number
     sql: toInt32OrZero(JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'status')) ;;
-    label: "3. Response Meta | Status"
+    group_label: "3. Response Meta Dimensions"
+    label: "Status"
     description: "HTTP status code from response meta"
   }
 
@@ -104,7 +115,8 @@ view: wenrix_rq_rs {
     type: time
     timeframes: [raw, date, week, month, quarter, year]
     sql: parseDateTimeBestEffort(JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'timestamp')) ;;
-    label: "3. Response Meta | Timestamp"
+    group_label: "3. Response Meta Dimensions"
+    label: "Timestamp"
     description: "Timestamp from response meta"
   }
 
@@ -115,42 +127,48 @@ view: wenrix_rq_rs {
   dimension: response_booking_reference {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'booking_reference') ;;
-    label: "4. Response Success | Booking Reference"
+    group_label: "4. Response Success Dimensions"
+    label: "Booking Reference"
     description: "Booking reference from successful response"
   }
 
   dimension: response_quote_id {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'quote_id') ;;
-    label: "4. Response Success | Quote ID"
+    group_label: "4. Response Success Dimensions"
+    label: "Quote ID"
     description: "Quote ID from successful response"
   }
 
   dimension: response_refund_amount {
     type: number
     sql: toFloat64OrZero(JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'refund_amount'), 'amount')) ;;
-    label: "4. Response Success | Refund Amount"
+    group_label: "4. Response Success Dimensions"
+    label: "Refund Amount"
     description: "Refund amount from successful response"
   }
 
   dimension: response_refund_currency {
     type: string
     sql: JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'refund_amount'), 'currency') ;;
-    label: "4. Response Success | Refund Currency"
+    group_label: "4. Response Success Dimensions"
+    label: "Refund Currency"
     description: "Refund currency from successful response"
   }
 
   dimension: response_total_penalty {
     type: number
     sql: toFloat64OrZero(JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'total_penalty'), 'amount')) ;;
-    label: "4. Response Success | Total Penalty"
+    group_label: "4. Response Success Dimensions"
+    label: "Total Penalty"
     description: "Total penalty amount from successful response"
   }
 
   dimension: response_total_penalty_currency {
     type: string
     sql: JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'total_penalty'), 'currency') ;;
-    label: "4. Response Success | Penalty Currency"
+    group_label: "4. Response Success Dimensions"
+    label: "Penalty Currency"
     description: "Total penalty currency from successful response"
   }
 
@@ -158,14 +176,16 @@ view: wenrix_rq_rs {
     type: time
     timeframes: [raw, date, week, month, quarter, year]
     sql: parseDateTimeBestEffort(JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'expires_at')) ;;
-    label: "4. Response Success | Expires At"
+    group_label: "4. Response Success Dimensions"
+    label: "Expires At"
     description: "Expiration date/time of the quote from successful response"
   }
 
   dimension: response_internal_id {
     type: string
     sql: JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'labels'), 'internal_id') ;;
-    label: "4. Response Success | Internal ID"
+    group_label: "4. Response Success Dimensions"
+    label: "Internal ID"
     description: "Internal booking ID from response labels"
   }
 
@@ -177,28 +197,32 @@ view: wenrix_rq_rs {
   dimension: error_code {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'errors', 0), 'code') ;;
-    label: "5. Response Error | Error Code"
+    group_label: "5. Response Error Dimensions"
+    label: "Error Code"
     description: "Error code from error response (first error)"
   }
 
   dimension: error_message {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'errors', 0), 'message') ;;
-    label: "5. Response Error | Error Message"
+    group_label: "5. Response Error Dimensions"
+    label: "Error Message"
     description: "Error message from error response (first error)"
   }
 
   dimension: error_type {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'errors', 0), 'type') ;;
-    label: "5. Response Error | Error Type"
+    group_label: "5. Response Error Dimensions"
+    label: "Error Type"
     description: "Error type from error response (first error)"
   }
 
   dimension: error_title {
     type: string
     sql: JSONExtractString(JSONExtract(${TABLE}.response, 'errors', 0), 'title') ;;
-    label: "5. Response Error | Error Title"
+    group_label: "5. Response Error Dimensions"
+    label: "Error Title"
     description: "Error title from error response (first error)"
   }
 
@@ -208,21 +232,24 @@ view: wenrix_rq_rs {
 
   measure: count {
     type: count
-    label: "6. Measures | Count"
+    group_label: "6. Measures"
+    label: "Count"
     description: "Total count of request/response records"
   }
 
   measure: count_success {
     type: count
     filters: [is_success: "yes"]
-    label: "6. Measures | Count Success"
+    group_label: "6. Measures"
+    label: "Count Success"
     description: "Count of successful operations"
   }
 
   measure: count_error {
     type: count
     filters: [is_error: "yes"]
-    label: "6. Measures | Count Error"
+    group_label: "6. Measures"
+    label: "Count Error"
     description: "Count of error operations"
   }
 
@@ -230,7 +257,8 @@ view: wenrix_rq_rs {
     type: number
     sql: ${count_success} / NULLIF(${count}, 0) * 100.0 ;;
     value_format_name: decimal_2
-    label: "6. Measures | Success Rate"
+    group_label: "6. Measures"
+    label: "Success Rate"
     description: "Percentage of successful operations"
   }
 
@@ -238,7 +266,8 @@ view: wenrix_rq_rs {
     type: sum
     sql: ${response_refund_amount} ;;
     value_format_name: decimal_2
-    label: "6. Measures | Total Refund Amount"
+    group_label: "6. Measures"
+    label: "Total Refund Amount"
     description: "Total refund amount across all successful responses"
   }
 
@@ -246,7 +275,8 @@ view: wenrix_rq_rs {
     type: sum
     sql: ${response_total_penalty} ;;
     value_format_name: decimal_2
-    label: "6. Measures | Total Penalty Amount"
+    group_label: "6. Measures"
+    label: "Total Penalty Amount"
     description: "Total penalty amount across all successful responses"
   }
 
@@ -254,7 +284,8 @@ view: wenrix_rq_rs {
     type: average
     sql: ${response_refund_amount} ;;
     value_format_name: decimal_2
-    label: "6. Measures | Average Refund Amount"
+    group_label: "6. Measures"
+    label: "Average Refund Amount"
     description: "Average refund amount per successful operation"
   }
 
@@ -262,28 +293,32 @@ view: wenrix_rq_rs {
     type: average
     sql: ${response_total_penalty} ;;
     value_format_name: decimal_2
-    label: "6. Measures | Average Penalty Amount"
+    group_label: "6. Measures"
+    label: "Average Penalty Amount"
     description: "Average penalty amount per successful operation"
   }
 
   measure: distinct_booking_references {
     type: count_distinct
     sql: ${request_booking_reference} ;;
-    label: "6. Measures | Distinct Booking References"
+    group_label: "6. Measures"
+    label: "Distinct Booking References"
     description: "Distinct count of booking references in requests"
   }
 
   measure: distinct_quote_ids {
     type: count_distinct
     sql: ${response_quote_id} ;;
-    label: "6. Measures | Distinct Quote IDs"
+    group_label: "6. Measures"
+    label: "Distinct Quote IDs"
     description: "Distinct count of quote IDs in responses"
   }
 
   measure: distinct_operations {
     type: count_distinct
     sql: ${operation} ;;
-    label: "6. Measures | Distinct Operations"
+    group_label: "6. Measures"
+    label: "Distinct Operations"
     description: "Distinct count of operation types"
   }
 
