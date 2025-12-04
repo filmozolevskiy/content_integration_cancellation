@@ -100,12 +100,12 @@ view: wenrix_rq_rs {
     description: "HTTP status code from response meta"
   }
 
-  dimension: response_timestamp {
-    type: datetime
+  dimension_group: response_timestamp {
+    type: time
+    timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
     sql: parseDateTimeBestEffort(JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'timestamp')) ;;
     label: "3. Response Meta | Timestamp"
     description: "Timestamp from response meta"
-    timeframes: [raw, date, week, month, quarter, year]
   }
 
   # -------------------------
@@ -154,12 +154,12 @@ view: wenrix_rq_rs {
     description: "Total penalty currency from successful response"
   }
 
-  dimension: response_expires_at {
-    type: datetime
+  dimension_group: response_expires_at {
+    type: time
+    timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
     sql: parseDateTimeBestEffort(JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'expires_at')) ;;
     label: "4. Response Success | Expires At"
     description: "Expiration date/time of the quote from successful response"
-    timeframes: [raw, date, week, month, quarter, year]
   }
 
   dimension: response_internal_id {

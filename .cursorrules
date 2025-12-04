@@ -51,10 +51,24 @@ content_integration_cancellation/
 - Always validate SQL syntax before committing
 
 ### Dimensions
-- Use appropriate type: `string`, `number`, `date`, `datetime`, `yesno`, `tier`, `zipcode`, `location`
+- Use appropriate type: `string`, `number`, `date`, `yesno`, `tier`, `zipcode`, `location`
+- **IMPORTANT**: Dimensions CANNOT be of type `datetime`. Only `dimension_group` can be of type `time`
+- For datetime/timestamp fields, use `dimension_group` with `type: time` and specify `timeframes`
 - Include `sql` for custom SQL dimensions
-- Use `timeframes` for date dimensions when applicable
-- Add `convert_tz` for proper timezone handling
+- Add `convert_tz` for proper timezone handling when needed
+
+### Dimension Groups (Time Fields)
+- **Always use `dimension_group` with `type: time` for datetime/timestamp fields**
+- Specify appropriate `timeframes` array: `[raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]`
+- Use `sql` to define the datetime expression
+- Example:
+  ```lookml
+  dimension_group: created {
+    type: time
+    timeframes: [raw, date, week, month, quarter, year]
+    sql: ${TABLE}.created_at ;;
+  }
+  ```
 
 ### Measures
 - Prefer standard aggregations: `sum`, `count`, `average`, `min`, `max`
