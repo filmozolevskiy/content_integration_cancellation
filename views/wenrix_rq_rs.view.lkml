@@ -85,7 +85,7 @@ view: wenrix_rq_rs {
 
   dimension: request_internal_id {
     type: string
-    sql: JSONExtractString(JSONExtract(${TABLE}.request, 'labels'), 'internal_id') ;;
+    sql: JSONExtractString(JSONExtractRaw(${TABLE}.request, 'labels'), 'internal_id') ;;
     group_label: "2. Request Dimensions"
     label: "Internal ID"
     description: "Internal booking ID from request labels"
@@ -97,7 +97,7 @@ view: wenrix_rq_rs {
   
   dimension: response_request_id {
     type: string
-    sql: JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'request_id') ;;
+    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'meta'), 'request_id') ;;
     group_label: "3. Response Meta Dimensions"
     label: "Request ID"
     description: "Request ID from response meta"
@@ -105,7 +105,7 @@ view: wenrix_rq_rs {
 
   dimension: response_status {
     type: number
-    sql: toInt32OrZero(JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'status')) ;;
+    sql: toInt32OrZero(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'meta'), 'status')) ;;
     group_label: "3. Response Meta Dimensions"
     label: "Status"
     description: "HTTP status code from response meta"
@@ -114,7 +114,7 @@ view: wenrix_rq_rs {
   dimension_group: response_timestamp {
     type: time
     timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
-    sql: parseDateTimeBestEffort(JSONExtractString(JSONExtract(${TABLE}.response, 'meta'), 'timestamp')) ;;
+    sql: parseDateTimeBestEffort(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'meta'), 'timestamp')) ;;
     group_label: "3. Response Meta Dimensions"
     label: "Timestamp"
     description: "Timestamp from response meta"
@@ -126,7 +126,7 @@ view: wenrix_rq_rs {
   
   dimension: response_booking_reference {
     type: string
-    sql: JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'booking_reference') ;;
+    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'data'), 'booking_reference') ;;
     group_label: "4. Response Success Dimensions"
     label: "Booking Reference"
     description: "Booking reference from successful response"
@@ -134,7 +134,7 @@ view: wenrix_rq_rs {
 
   dimension: response_quote_id {
     type: string
-    sql: JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'quote_id') ;;
+    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'data'), 'quote_id') ;;
     group_label: "4. Response Success Dimensions"
     label: "Quote ID"
     description: "Quote ID from successful response"
@@ -142,7 +142,7 @@ view: wenrix_rq_rs {
 
   dimension: response_refund_amount {
     type: number
-    sql: toFloat64OrZero(JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'refund_amount'), 'amount')) ;;
+    sql: toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'refund_amount'), 'amount')) ;;
     group_label: "4. Response Success Dimensions"
     label: "Refund Amount"
     description: "Refund amount from successful response"
@@ -150,7 +150,7 @@ view: wenrix_rq_rs {
 
   dimension: response_refund_currency {
     type: string
-    sql: JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'refund_amount'), 'currency') ;;
+    sql: JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'refund_amount'), 'currency') ;;
     group_label: "4. Response Success Dimensions"
     label: "Refund Currency"
     description: "Refund currency from successful response"
@@ -158,7 +158,7 @@ view: wenrix_rq_rs {
 
   dimension: response_total_penalty {
     type: number
-    sql: toFloat64OrZero(JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'total_penalty'), 'amount')) ;;
+    sql: toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'total_penalty'), 'amount')) ;;
     group_label: "4. Response Success Dimensions"
     label: "Total Penalty"
     description: "Total penalty amount from successful response"
@@ -166,7 +166,7 @@ view: wenrix_rq_rs {
 
   dimension: response_total_penalty_currency {
     type: string
-    sql: JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'total_penalty'), 'currency') ;;
+    sql: JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'total_penalty'), 'currency') ;;
     group_label: "4. Response Success Dimensions"
     label: "Penalty Currency"
     description: "Total penalty currency from successful response"
@@ -175,7 +175,7 @@ view: wenrix_rq_rs {
   dimension_group: response_expires_at {
     type: time
     timeframes: [raw, date, week, month, quarter, year, date_month_num, date_quarter_num, date_year]
-    sql: parseDateTimeBestEffort(JSONExtractString(JSONExtract(${TABLE}.response, 'data'), 'expires_at')) ;;
+    sql: parseDateTimeBestEffort(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'data'), 'expires_at')) ;;
     group_label: "4. Response Success Dimensions"
     label: "Expires At"
     description: "Expiration date/time of the quote from successful response"
@@ -183,7 +183,7 @@ view: wenrix_rq_rs {
 
   dimension: response_internal_id {
     type: string
-    sql: JSONExtractString(JSONExtract(JSONExtract(${TABLE}.response, 'data'), 'labels'), 'internal_id') ;;
+    sql: JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'labels'), 'internal_id') ;;
     group_label: "4. Response Success Dimensions"
     label: "Internal ID"
     description: "Internal booking ID from response labels"
@@ -196,7 +196,7 @@ view: wenrix_rq_rs {
 
   dimension: error_code {
     type: string
-    sql: JSONExtractString(JSONExtract(${TABLE}.response, 'errors', 0), 'code') ;;
+    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'errors', 0), 'code') ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Code"
     description: "Error code from error response (first error)"
@@ -204,7 +204,7 @@ view: wenrix_rq_rs {
 
   dimension: error_message {
     type: string
-    sql: JSONExtractString(JSONExtract(${TABLE}.response, 'errors', 0), 'message') ;;
+    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'errors', 0), 'message') ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Message"
     description: "Error message from error response (first error)"
@@ -212,7 +212,7 @@ view: wenrix_rq_rs {
 
   dimension: error_type {
     type: string
-    sql: JSONExtractString(JSONExtract(${TABLE}.response, 'errors', 0), 'type') ;;
+    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'errors', 0), 'type') ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Type"
     description: "Error type from error response (first error)"
@@ -220,7 +220,7 @@ view: wenrix_rq_rs {
 
   dimension: error_title {
     type: string
-    sql: JSONExtractString(JSONExtract(${TABLE}.response, 'errors', 0), 'title') ;;
+    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'errors', 0), 'title') ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Title"
     description: "Error title from error response (first error)"
