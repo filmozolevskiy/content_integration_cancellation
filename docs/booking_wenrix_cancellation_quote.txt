@@ -1,0 +1,272 @@
+CREATE TABLE ota_reports.wenrix_rq_rs
+(
+    `operation` String,
+    `result` String,
+    `request` String,
+    `response` String,
+    `created_at` DateTime
+)
+ENGINE = Distributed('ota', 'ota_reports_shard', 'wenrix_rq_rs', rand())
+
+
+
+EXAMPLE OF ota_reports.wenrix_rq_rs.requests
+{
+    "branch": "ATL1S211S",
+    "source": "amadeus",
+    "booking_reference": "A7NTMN",
+    "labels": {
+        "internal_id": "287937321"
+    }
+}
+
+
+EXAMPLE OF ota_reports.wenrix_rq_rs.response (error)
+{
+    "errors": [
+        {
+            "code": "not_supported",
+            "message": "The requested PNR is not currently supported by Wenrix",
+            "title": "PNR Not Supported",
+            "type": "quotation_error"
+        }
+    ],
+    "meta": {
+        "request_id": "01KBMSPR0PW1VEJ8K7Q5K35G8W",
+        "status": 400,
+        "timestamp": "2025-12-04T13:44:25.365567+00:00"
+    }
+}
+
+EXAMPLE OF ota_reports.wenrix_rq_rs.response (success)
+{
+    "data": {
+        "booking_reference": "ANDA2L",
+        "expires_at": "2026-01-12T20:20:00+00:00",
+        "labels": {
+            "internal_id": "287522061"
+        },
+        "quote_id": "cq_01KBMVG781F7VRBDBZ7EE8WWGV",
+        "refund_amount": {
+            "amount": "133.24",
+            "currency": "USD"
+        },
+        "tickets": [
+            {
+                "cancellation_details": {
+                    "refund_amount": {
+                        "amount": "66.62",
+                        "currency": "USD"
+                    },
+                    "taxes_breakdown": [
+                        {
+                            "code": "AY",
+                            "price": {
+                                "amount": "5.6",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "US",
+                            "price": {
+                                "amount": "5.4",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "non_refundable"
+                        },
+                        {
+                            "code": "XA",
+                            "price": {
+                                "amount": "3.84",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "XY",
+                            "price": {
+                                "amount": "7.0",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "YC",
+                            "price": {
+                                "amount": "7.39",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "ZP",
+                            "price": {
+                                "amount": "10.4",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "non_refundable"
+                        },
+                        {
+                            "code": "CA",
+                            "price": {
+                                "amount": "11.4",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "XG",
+                            "price": {
+                                "amount": "5.59",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "partially_refundable"
+                        },
+                        {
+                            "code": "XQ",
+                            "price": {
+                                "amount": "2.83",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "partially_refundable"
+                        },
+                        {
+                            "code": "SQ",
+                            "price": {
+                                "amount": "28.4",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "XF",
+                            "price": {
+                                "amount": "4.5",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "non_refundable"
+                        }
+                    ],
+                    "total_penalty": {
+                        "amount": "97.73",
+                        "currency": "USD"
+                    }
+                },
+                "ticket_number": "0147385654350"
+            },
+            {
+                "cancellation_details": {
+                    "refund_amount": {
+                        "amount": "66.62",
+                        "currency": "USD"
+                    },
+                    "taxes_breakdown": [
+                        {
+                            "code": "AY",
+                            "price": {
+                                "amount": "5.6",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "US",
+                            "price": {
+                                "amount": "5.4",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "non_refundable"
+                        },
+                        {
+                            "code": "XA",
+                            "price": {
+                                "amount": "3.84",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "XY",
+                            "price": {
+                                "amount": "7.0",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "YC",
+                            "price": {
+                                "amount": "7.39",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "ZP",
+                            "price": {
+                                "amount": "10.4",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "non_refundable"
+                        },
+                        {
+                            "code": "CA",
+                            "price": {
+                                "amount": "11.4",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "XG",
+                            "price": {
+                                "amount": "5.59",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "partially_refundable"
+                        },
+                        {
+                            "code": "XQ",
+                            "price": {
+                                "amount": "2.83",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "partially_refundable"
+                        },
+                        {
+                            "code": "SQ",
+                            "price": {
+                                "amount": "28.4",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "fully_refundable"
+                        },
+                        {
+                            "code": "XF",
+                            "price": {
+                                "amount": "4.5",
+                                "currency": "USD"
+                            },
+                            "refund_policy": "non_refundable"
+                        }
+                    ],
+                    "total_penalty": {
+                        "amount": "97.73",
+                        "currency": "USD"
+                    }
+                },
+                "ticket_number": "0147385654351"
+            }
+        ],
+        "total_penalty": {
+            "amount": "195.46",
+            "currency": "USD"
+        }
+    },
+    "meta": {
+        "request_id": "01KBMVG763W7N1MMD62R9C9ZY1",
+        "status": 200,
+        "timestamp": "2025-12-04T14:15:48.674205+00:00"
+    }
+}

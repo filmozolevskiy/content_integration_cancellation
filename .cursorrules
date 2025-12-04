@@ -1,0 +1,194 @@
+# Cursor Rules for Content Integration Cancellation Looker Project
+
+## Project Overview
+This is a Looker (LookML) project for content integration cancellation analytics. The project uses the "ota" database connection and works with the `booking_wenrix_cancellation_quote` table containing JSON details.
+
+## Code Style & Formatting
+
+### LookML Files
+- Use 2 spaces for indentation (no tabs)
+- Always include proper labels for explores, views, and fields
+- Use descriptive names following snake_case convention
+- Add comments for complex logic or business rules
+- Keep SQL queries readable with proper formatting
+
+### SQL in Derived Tables
+- Format SQL with proper indentation
+- Use double semicolons (;;) to end SQL blocks
+- Always test SQL queries independently before embedding in LookML
+- Use CTEs for complex queries to improve readability
+- Include comments for non-obvious SQL logic
+
+## Project Structure
+
+```
+content_integration_cancellation/
+├── models/
+│   └── *.model.lkml          # LookML model files
+├── views/
+│   └── *.view.lkml           # LookML view files
+└── docs/
+    └── *.txt                 # Documentation files
+```
+
+- Models define explores and relationships
+- Views contain dimensions, measures, and derived table logic
+- Docs contain schema and data examples
+
+## LookML Best Practices
+
+### Views
+- Always define a primary key using `sql_primary_key`
+- Use descriptive labels for all dimensions and measures
+- Include type definitions for dimensions (string, number, date, etc.)
+- Add `hidden: yes` for internal fields that shouldn't be exposed
+- Use `description` fields to document business logic
+
+### Derived Tables
+- Use `sql_table_name` for simple tables
+- Use `derived_table` with SQL for computed tables
+- Include `sql_trigger_value` for incremental PDTs when appropriate
+- Always validate SQL syntax before committing
+
+### Dimensions
+- Use appropriate type: `string`, `number`, `date`, `datetime`, `yesno`, `tier`, `zipcode`, `location`
+- Include `sql` for custom SQL dimensions
+- Use `timeframes` for date dimensions when applicable
+- Add `convert_tz` for proper timezone handling
+
+### Measures
+- Prefer standard aggregations: `sum`, `count`, `average`, `min`, `max`
+- Use `type: count` for counting records
+- Use `type: sum` for summing numeric values
+- Always include `sql_distinct_key` when using `distinct`
+- Consider using `approximate_distinct_count` for large datasets
+
+### Parameters
+- Use descriptive parameter names
+- Include default values when appropriate
+- Use `allowed_value` for constrained options
+- Add descriptions explaining parameter purpose
+
+## Database & SQL Patterns
+
+### Connection
+- Database connection: `ota`
+- Primary table: `booking_wenrix_cancellation_quote`
+
+### JSON Parsing Patterns
+The `details` field contains JSON data. Use JSON extraction functions:
+
+```sql
+-- Extract simple fields
+JSON_EXTRACT(details, '$.data.booking_reference') AS booking_reference
+JSON_EXTRACT(details, '$.data.quote_id') AS quote_id
+
+-- Extract nested objects
+JSON_EXTRACT(details, '$.data.refund_amount.amount') AS refund_amount
+JSON_EXTRACT(details, '$.data.refund_amount.currency') AS refund_currency
+
+-- Extract from arrays (requires UNNEST or JSON functions)
+JSON_EXTRACT(details, '$.data.tickets') AS tickets_array
+```
+
+### Common Patterns
+- Always handle NULL values when extracting JSON
+- Use `CAST()` or conversion functions for numeric/date fields
+- Consider using `JSON_UNQUOTE()` when extracting string values
+- Test JSON extraction with sample data before implementing
+
+### SQL Best Practices
+- Use table aliases (e.g., `bwcq` for `booking_wenrix_cancellation_quote`)
+- Filter on indexed columns when possible (`booking_id`, `quote_id`)
+- Use appropriate JOIN types (INNER, LEFT, etc.)
+- Add WHERE clauses to filter data at the SQL level when possible
+- Consider performance implications of derived tables
+
+## Error Handling
+
+### LookML Validation
+- Always validate LookML syntax before committing
+- Check for required fields in explores
+- Ensure proper SQL syntax in derived tables
+- Verify field names match SQL aliases
+
+### SQL Validation
+- Test all SQL queries independently
+- Handle NULL values appropriately
+- Validate JSON extraction paths exist in sample data
+- Consider error handling for malformed JSON
+
+## Documentation
+
+### Code Comments
+- Add comments explaining business logic
+- Document assumptions about data structure
+- Note any data quality considerations
+- Include examples of expected data formats
+
+### Field Descriptions
+- Always add `description` to complex dimensions/measures
+- Explain calculation methodology
+- Note any limitations or caveats
+- Reference source documentation when applicable
+
+## Testing & Development
+
+### Development Workflow
+1. Review documentation in `docs/` folder for schema details
+2. Test SQL queries in database tool before implementing
+3. Create views incrementally (dimensions first, then measures)
+4. Validate LookML syntax after each change
+5. Test explores in Looker UI
+
+### Common Tasks
+- When adding new dimensions, check JSON structure in docs
+- When creating measures, consider appropriate aggregation
+- When using dates, ensure timezone handling is correct
+- When working with arrays, plan extraction strategy
+
+## Performance Considerations
+
+- Use persistent derived tables (PDTs) for expensive queries
+- Set appropriate `datagroup_trigger` for PDTs
+- Consider indexing strategy for filtered dimensions
+- Use `sql_distinct_key` for distinct count measures
+- Minimize JSON parsing in hot paths - consider preprocessing
+
+## Naming Conventions
+
+### Views
+- Use descriptive names: `content_integration_cancellation`
+- Match view name to business concept
+- Use snake_case throughout
+
+### Dimensions
+- Use clear, business-friendly names
+- Prefix date dimensions with time period if needed: `created_date`, `expires_date`
+- Use descriptive suffixes: `_amount`, `_currency`, `_count`
+
+### Measures
+- Use aggregation prefix: `total_`, `average_`, `count_`, `max_`, `min_`
+- Be specific: `total_refund_amount` not `total_amount`
+- Use plural for counts: `cancellation_count`
+
+### Explores
+- Match explore name to primary view
+- Use descriptive labels for end users
+- Keep names consistent with view names
+
+## Security & Access
+
+- Review field visibility (`hidden: yes` for internal fields)
+- Consider access filters if needed
+- Document any PII handling requirements
+- Follow data governance policies
+
+## Git & Version Control
+
+- Commit logical units of work
+- Use descriptive commit messages
+- Test before committing
+- Keep derived table SQL readable for code review
+- Document breaking changes
+
