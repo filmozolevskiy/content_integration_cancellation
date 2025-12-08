@@ -1,7 +1,7 @@
 # Cursor Rules for Content Integration Cancellation Looker Project
 
 ## Project Overview
-This is a Looker (LookML) project for content integration cancellation analytics. The project uses the "ota" database connection and works with the `booking_wenrix_cancellation_quote` table containing JSON details.
+This is a Looker (LookML) project for content integration cancellation analytics. The project uses the "ota_phoenix" database connection (ClickHouse) and works with tables like `wenrix_rq_rs` and `booking_wenrix_cancellation_quote` containing JSON details.
 
 ## Code Style & Formatting
 
@@ -86,37 +86,65 @@ content_integration_cancellation/
 ## Database & SQL Patterns
 
 ### Connection
-- Database connection: `ota`
-- Primary table: `booking_wenrix_cancellation_quote`
+- Database connection: `ota_phoenix` (ClickHouse)
+- Primary tables: `ota_reports.wenrix_rq_rs`, `booking_wenrix_cancellation_quote`
+- Database type: ClickHouse (distributed database)
 
-### JSON Parsing Patterns
-The `details` field contains JSON data. Use JSON extraction functions:
+### ClickHouse-Specific Functions
+
+#### Hash Functions
+- **DO NOT use `hash()` - it doesn't exist in ClickHouse**
+- Use `cityHash64()` for hashing strings/data: `cityHash64(column_name)`
+- Alternative hash functions: `xxHash64()`, `sipHash64()`, `MD5()`, `SHA256()`
+- Example:
+  ```sql
+  toString(created_at) || '_' || toString(cityHash64(request)) || '_' || toString(cityHash64(response)) AS id
+  ```
+
+#### String Concatenation
+- Use `||` operator: `string1 || string2`
+- Or use `concat()` function: `concat(string1, string2, string3)`
+- Use `toString()` to convert numbers/dates to strings: `toString(created_at)`
+
+#### Date/Time Functions
+- Use `parseDateTimeBestEffort()` for parsing datetime strings: `parseDateTimeBestEffort(timestamp_string)`
+- Handle empty strings with `nullIf()` and `empty()`: `if(empty(nullIf(timestamp_string, '')), NULL, parseDateTimeBestEffort(...))`
+
+### JSON Parsing Patterns (ClickHouse)
+The JSON fields use ClickHouse JSON functions (different from MySQL):
 
 ```sql
--- Extract simple fields
-JSON_EXTRACT(details, '$.data.booking_reference') AS booking_reference
-JSON_EXTRACT(details, '$.data.quote_id') AS quote_id
+-- Extract simple string fields
+JSONExtractString(json_column, 'field_name') AS field_name
 
--- Extract nested objects
-JSON_EXTRACT(details, '$.data.refund_amount.amount') AS refund_amount
-JSON_EXTRACT(details, '$.data.refund_amount.currency') AS refund_currency
+-- Extract nested fields
+JSONExtractString(JSONExtractRaw(json_column, 'parent'), 'child') AS nested_field
 
--- Extract from arrays (requires UNNEST or JSON functions)
-JSON_EXTRACT(details, '$.data.tickets') AS tickets_array
+-- Check if JSON field exists before extracting
+if(JSONHas(json_column, 'field_name'), JSONExtractString(...), NULL) AS safe_field
+
+-- Extract from arrays (first element at index 0)
+JSONExtractString(JSONExtractRaw(json_column, 'errors', 0), 'code') AS error_code
+
+-- Convert JSON values to numbers
+toFloat64OrZero(JSONExtractString(...)) AS numeric_value
+toInt32OrZero(JSONExtractString(...)) AS integer_value
 ```
 
 ### Common Patterns
-- Always handle NULL values when extracting JSON
-- Use `CAST()` or conversion functions for numeric/date fields
-- Consider using `JSON_UNQUOTE()` when extracting string values
+- Always handle NULL values when extracting JSON - use `if(JSONHas(...), ...)` checks
+- Use `JSONExtractRaw()` for nested objects, then `JSONExtractString()` for the final value
+- Use `toFloat64OrZero()` or `toInt32OrZero()` for numeric conversions (handles NULL/empty safely)
 - Test JSON extraction with sample data before implementing
+- Use CTEs (Common Table Expressions) for complex JSON extraction to improve readability and performance
 
 ### SQL Best Practices
-- Use table aliases (e.g., `bwcq` for `booking_wenrix_cancellation_quote`)
-- Filter on indexed columns when possible (`booking_id`, `quote_id`)
+- Use table aliases (e.g., `b` for base_cte, `r` for request_cte)
+- Use CTEs to organize complex queries and extract JSON fields once
+- Filter on indexed columns when possible
 - Use appropriate JOIN types (INNER, LEFT, etc.)
 - Add WHERE clauses to filter data at the SQL level when possible
-- Consider performance implications of derived tables
+- Consider performance implications of derived tables - extract JSON in the derived table SQL, not in dimensions
 
 ## Error Handling
 
