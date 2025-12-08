@@ -47,10 +47,10 @@ view: wenrix_rq_rs {
       errors_cte AS (
         SELECT 
           id,
-          JSONExtractString(response, 'errors', 0, 'code') AS error_code,
-          JSONExtractString(response, 'errors', 0, 'message') AS error_message,
-          JSONExtractString(response, 'errors', 0, 'type') AS error_type,
-          JSONExtractString(response, 'errors', 0, 'title') AS error_title
+          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'code'), NULL) AS error_code,
+          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'message'), NULL) AS error_message,
+          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'type'), NULL) AS error_type,
+          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'title'), NULL) AS error_title
         FROM base_cte
       )
       SELECT 
