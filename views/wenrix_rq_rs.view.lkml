@@ -1,11 +1,95 @@
 view: wenrix_rq_rs {
 
-  # Primary key for the view
-  sql_table_name: ota_reports.wenrix_rq_rs ;;
+  # Derived Table with CTEs for JSON extraction
+  # base_cte computes ID once and includes request/response JSON for other CTEs to extract from
+  derived_table: {
+    sql: 
+      WITH base_cte AS (
+        SELECT 
+          toString(created_at) || '_' || toString(hash(request)) || '_' || toString(hash(response)) AS id,
+          operation,
+          result,
+          created_at,
+          request,
+          response
+        FROM ota_reports.wenrix_rq_rs
+      ),
+      request_cte AS (
+        SELECT 
+          id,
+          JSONExtractString(request, 'branch') AS request_branch,
+          JSONExtractString(request, 'source') AS request_source,
+          JSONExtractString(request, 'booking_reference') AS request_booking_reference,
+          if(JSONHas(request, 'labels'), JSONExtractString(JSONExtractRaw(request, 'labels'), 'internal_id'), NULL) AS request_internal_id
+        FROM base_cte
+      ),
+      response_meta_cte AS (
+        SELECT 
+          id,
+          if(JSONHas(response, 'meta'), JSONExtractString(JSONExtractRaw(response, 'meta'), 'request_id'), NULL) AS response_request_id,
+          if(JSONHas(response, 'meta'), toInt32OrZero(JSONExtractString(JSONExtractRaw(response, 'meta'), 'status')), 0) AS response_status,
+          if(JSONHas(response, 'meta'), JSONExtractString(JSONExtractRaw(response, 'meta'), 'timestamp'), NULL) AS response_timestamp_raw
+        FROM base_cte
+      ),
+      response_data_cte AS (
+        SELECT 
+          id,
+          if(JSONHas(response, 'data'), JSONExtractString(JSONExtractRaw(response, 'data'), 'booking_reference'), NULL) AS response_booking_reference,
+          if(JSONHas(response, 'data'), JSONExtractString(JSONExtractRaw(response, 'data'), 'quote_id'), NULL) AS response_quote_id,
+          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'refund_amount'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'refund_amount'), 'amount')), 0.0) AS response_refund_amount,
+          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'refund_amount'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'refund_amount'), 'currency'), NULL) AS response_refund_currency,
+          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'amount')), 0.0) AS response_total_penalty,
+          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'currency'), NULL) AS response_total_penalty_currency,
+          if(JSONHas(response, 'data'), JSONExtractString(JSONExtractRaw(response, 'data'), 'expires_at'), NULL) AS response_expires_at_raw,
+          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'labels'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'labels'), 'internal_id'), NULL) AS response_internal_id
+        FROM base_cte
+      ),
+      errors_cte AS (
+        SELECT 
+          id,
+          if(JSONHas(response, 'errors') AND JSONExtractRaw(response, 'errors', 0) IS NOT NULL, JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'code'), NULL) AS error_code,
+          if(JSONHas(response, 'errors') AND JSONExtractRaw(response, 'errors', 0) IS NOT NULL, JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'message'), NULL) AS error_message,
+          if(JSONHas(response, 'errors') AND JSONExtractRaw(response, 'errors', 0) IS NOT NULL, JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'type'), NULL) AS error_type,
+          if(JSONHas(response, 'errors') AND JSONExtractRaw(response, 'errors', 0) IS NOT NULL, JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'title'), NULL) AS error_title
+        FROM base_cte
+      )
+      SELECT 
+        b.id,
+        b.operation,
+        b.result,
+        b.created_at,
+        r.request_branch,
+        r.request_source,
+        r.request_booking_reference,
+        r.request_internal_id,
+        rm.response_request_id,
+        rm.response_status,
+        if(empty(nullIf(rm.response_timestamp_raw, '')), NULL, parseDateTimeBestEffort(nullIf(rm.response_timestamp_raw, ''))) AS response_timestamp,
+        rd.response_booking_reference,
+        rd.response_quote_id,
+        rd.response_refund_amount,
+        rd.response_refund_currency,
+        rd.response_total_penalty,
+        rd.response_total_penalty_currency,
+        if(empty(nullIf(rd.response_expires_at_raw, '')), NULL, parseDateTimeBestEffort(nullIf(rd.response_expires_at_raw, ''))) AS response_expires_at,
+        rd.response_internal_id,
+        e.error_code,
+        e.error_message,
+        e.error_type,
+        e.error_title
+      FROM base_cte b
+      LEFT JOIN request_cte r ON b.id = r.id
+      LEFT JOIN response_meta_cte rm ON b.id = rm.id
+      LEFT JOIN response_data_cte rd ON b.id = rd.id
+      LEFT JOIN errors_cte e ON b.id = e.id
+    ;;
+    
+    sql_primary_key: id ;;
+  }
 
   dimension: id {
     type: string
-    sql: toString(created_at) || '_' || toString(hash(request)) || '_' || toString(hash(response)) ;;
+    sql: ${TABLE}.id ;;
     primary_key: yes
     hidden: yes
   }
@@ -61,7 +145,7 @@ view: wenrix_rq_rs {
 
   dimension: request_branch {
     type: string
-    sql: JSONExtractString(${TABLE}.request, 'branch') ;;
+    sql: ${TABLE}.request_branch ;;
     group_label: "2. Request Dimensions"
     label: "Branch"
     description: "Branch code from the request"
@@ -69,7 +153,7 @@ view: wenrix_rq_rs {
 
   dimension: request_source {
     type: string
-    sql: JSONExtractString(${TABLE}.request, 'source') ;;
+    sql: ${TABLE}.request_source ;;
     group_label: "2. Request Dimensions"
     label: "Source"
     description: "Source system from the request (e.g., amadeus)"
@@ -77,7 +161,7 @@ view: wenrix_rq_rs {
 
   dimension: request_booking_reference {
     type: string
-    sql: JSONExtractString(${TABLE}.request, 'booking_reference') ;;
+    sql: ${TABLE}.request_booking_reference ;;
     group_label: "2. Request Dimensions"
     label: "Booking Reference"
     description: "Booking reference from the request"
@@ -85,7 +169,7 @@ view: wenrix_rq_rs {
 
   dimension: request_internal_id {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(${TABLE}.request, 'labels'), 'internal_id') ;;
+    sql: ${TABLE}.request_internal_id ;;
     group_label: "2. Request Dimensions"
     label: "Internal ID"
     description: "Internal booking ID from request labels"
@@ -97,7 +181,7 @@ view: wenrix_rq_rs {
 
   dimension: response_request_id {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'meta'), 'request_id') ;;
+    sql: ${TABLE}.response_request_id ;;
     group_label: "3. Response Meta Dimensions"
     label: "Request ID"
     description: "Request ID from response meta"
@@ -105,7 +189,7 @@ view: wenrix_rq_rs {
 
   dimension: response_status {
     type: number
-    sql: toInt32OrZero(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'meta'), 'status')) ;;
+    sql: ${TABLE}.response_status ;;
     group_label: "3. Response Meta Dimensions"
     label: "Status"
     description: "HTTP status code from response meta"
@@ -114,7 +198,7 @@ view: wenrix_rq_rs {
   dimension_group: response_timestamp {
     type: time
     timeframes: [raw, date, week, month, quarter, year]
-    sql: if(empty(nullIf(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'meta'), 'timestamp'), '')), NULL, parseDateTimeBestEffort(nullIf(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'meta'), 'timestamp'), ''))) ;;
+    sql: ${TABLE}.response_timestamp ;;
     group_label: "3. Response Meta Dimensions"
     label: "Timestamp"
     description: "Timestamp from response meta"
@@ -126,7 +210,7 @@ view: wenrix_rq_rs {
 
   dimension: response_booking_reference {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'data'), 'booking_reference') ;;
+    sql: ${TABLE}.response_booking_reference ;;
     group_label: "4. Response Success Dimensions"
     label: "Booking Reference"
     description: "Booking reference from successful response"
@@ -134,7 +218,7 @@ view: wenrix_rq_rs {
 
   dimension: response_quote_id {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'data'), 'quote_id') ;;
+    sql: ${TABLE}.response_quote_id ;;
     group_label: "4. Response Success Dimensions"
     label: "Quote ID"
     description: "Quote ID from successful response"
@@ -142,7 +226,7 @@ view: wenrix_rq_rs {
 
   dimension: response_refund_amount {
     type: number
-    sql: toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'refund_amount'), 'amount')) ;;
+    sql: ${TABLE}.response_refund_amount ;;
     group_label: "4. Response Success Dimensions"
     label: "Refund Amount"
     description: "Refund amount from successful response"
@@ -150,7 +234,7 @@ view: wenrix_rq_rs {
 
   dimension: response_refund_currency {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'refund_amount'), 'currency') ;;
+    sql: ${TABLE}.response_refund_currency ;;
     group_label: "4. Response Success Dimensions"
     label: "Refund Currency"
     description: "Refund currency from successful response"
@@ -158,7 +242,7 @@ view: wenrix_rq_rs {
 
   dimension: response_total_penalty {
     type: number
-    sql: toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'total_penalty'), 'amount')) ;;
+    sql: ${TABLE}.response_total_penalty ;;
     group_label: "4. Response Success Dimensions"
     label: "Total Penalty"
     description: "Total penalty amount from successful response"
@@ -166,7 +250,7 @@ view: wenrix_rq_rs {
 
   dimension: response_total_penalty_currency {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'total_penalty'), 'currency') ;;
+    sql: ${TABLE}.response_total_penalty_currency ;;
     group_label: "4. Response Success Dimensions"
     label: "Penalty Currency"
     description: "Total penalty currency from successful response"
@@ -175,7 +259,7 @@ view: wenrix_rq_rs {
   dimension_group: response_expires_at {
     type: time
     timeframes: [raw, date, week, month, quarter, year]
-    sql: if(empty(nullIf(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'data'), 'expires_at'), '')), NULL, parseDateTimeBestEffort(nullIf(JSONExtractString(JSONExtractRaw(${TABLE}.response, 'data'), 'expires_at'), ''))) ;;
+    sql: ${TABLE}.response_expires_at ;;
     group_label: "4. Response Success Dimensions"
     label: "Expires At"
     description: "Expiration date/time of the quote from successful response"
@@ -183,7 +267,7 @@ view: wenrix_rq_rs {
 
   dimension: response_internal_id {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(JSONExtractRaw(${TABLE}.response, 'data'), 'labels'), 'internal_id') ;;
+    sql: ${TABLE}.response_internal_id ;;
     group_label: "4. Response Success Dimensions"
     label: "Internal ID"
     description: "Internal booking ID from response labels"
@@ -196,7 +280,7 @@ view: wenrix_rq_rs {
 
   dimension: error_code {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'errors', 0), 'code') ;;
+    sql: ${TABLE}.error_code ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Code"
     description: "Error code from error response (first error)"
@@ -204,7 +288,7 @@ view: wenrix_rq_rs {
 
   dimension: error_message {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'errors', 0), 'message') ;;
+    sql: ${TABLE}.error_message ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Message"
     description: "Error message from error response (first error)"
@@ -212,7 +296,7 @@ view: wenrix_rq_rs {
 
   dimension: error_type {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'errors', 0), 'type') ;;
+    sql: ${TABLE}.error_type ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Type"
     description: "Error type from error response (first error)"
@@ -220,7 +304,7 @@ view: wenrix_rq_rs {
 
   dimension: error_title {
     type: string
-    sql: JSONExtractString(JSONExtractRaw(${TABLE}.response, 'errors', 0), 'title') ;;
+    sql: ${TABLE}.error_title ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Title"
     description: "Error title from error response (first error)"
