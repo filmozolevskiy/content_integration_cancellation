@@ -6,7 +6,7 @@ view: wenrix_rq_rs {
     sql: 
       WITH base_cte AS (
         SELECT 
-          toString(created_at) || '_' || toString(hash(request)) || '_' || toString(hash(response)) AS id,
+          toString(created_at) || '_' || toString(cityHash64(request)) || '_' || toString(cityHash64(response)) AS id,
           operation,
           result,
           created_at,
