@@ -26,32 +26,35 @@ view: wenrix_rq_rs {
       response_meta_cte AS (
         SELECT 
           id,
-          if(JSONHas(response, 'meta'), JSONExtractString(JSONExtractRaw(response, 'meta'), 'request_id'), NULL) AS response_request_id,
-          if(JSONHas(response, 'meta'), toInt32OrZero(JSONExtractString(JSONExtractRaw(response, 'meta'), 'status')), 0) AS response_status,
-          if(JSONHas(response, 'meta'), JSONExtractString(JSONExtractRaw(response, 'meta'), 'timestamp'), NULL) AS response_timestamp_raw
+          JSONExtractString(JSONExtractRaw(response, 'meta'), 'request_id') AS response_request_id,
+          toInt32OrZero(JSONExtractString(JSONExtractRaw(response, 'meta'), 'status')) AS response_status,
+          JSONExtractString(JSONExtractRaw(response, 'meta'), 'timestamp') AS response_timestamp_raw
         FROM base_cte
+        WHERE JSONHas(response, 'meta')
       ),
       response_data_cte AS (
         SELECT 
           id,
-          if(JSONHas(response, 'data'), JSONExtractString(JSONExtractRaw(response, 'data'), 'booking_reference'), NULL) AS response_booking_reference,
-          if(JSONHas(response, 'data'), JSONExtractString(JSONExtractRaw(response, 'data'), 'quote_id'), NULL) AS response_quote_id,
-          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'refund_amount'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'refund_amount'), 'amount')), 0.0) AS response_refund_amount,
-          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'refund_amount'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'refund_amount'), 'currency'), NULL) AS response_refund_currency,
-          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'amount')), 0.0) AS response_total_penalty,
-          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'currency'), NULL) AS response_total_penalty_currency,
-          if(JSONHas(response, 'data'), JSONExtractString(JSONExtractRaw(response, 'data'), 'expires_at'), NULL) AS response_expires_at_raw,
-          if(JSONHas(response, 'data') AND JSONHas(JSONExtractRaw(response, 'data'), 'labels'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'labels'), 'internal_id'), NULL) AS response_internal_id
+          JSONExtractString(JSONExtractRaw(response, 'data'), 'booking_reference') AS response_booking_reference,
+          JSONExtractString(JSONExtractRaw(response, 'data'), 'quote_id') AS response_quote_id,
+          if(JSONHas(JSONExtractRaw(response, 'data'), 'refund_amount'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'refund_amount'), 'amount')), 0.0) AS response_refund_amount,
+          if(JSONHas(JSONExtractRaw(response, 'data'), 'refund_amount'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'refund_amount'), 'currency'), NULL) AS response_refund_currency,
+          if(JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'amount')), 0.0) AS response_total_penalty,
+          if(JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'currency'), NULL) AS response_total_penalty_currency,
+          JSONExtractString(JSONExtractRaw(response, 'data'), 'expires_at') AS response_expires_at_raw,
+          if(JSONHas(JSONExtractRaw(response, 'data'), 'labels'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'labels'), 'internal_id'), NULL) AS response_internal_id
         FROM base_cte
+        WHERE JSONHas(response, 'data')
       ),
       errors_cte AS (
         SELECT 
           id,
-          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'code'), NULL) AS error_code,
-          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'message'), NULL) AS error_message,
-          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'type'), NULL) AS error_type,
-          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'title'), NULL) AS error_title
+          JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'code') AS error_code,
+          JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'message') AS error_message,
+          JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'type') AS error_type,
+          JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'title') AS error_title
         FROM base_cte
+        WHERE JSONHas(response, 'errors')
       )
       SELECT 
         b.id,
