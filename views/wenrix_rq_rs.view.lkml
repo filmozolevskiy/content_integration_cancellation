@@ -47,10 +47,10 @@ view: wenrix_rq_rs {
       errors_cte AS (
         SELECT 
           id,
-          if(JSONHas(response, 'errors') AND JSONExtractRaw(response, 'errors', 0) IS NOT NULL, JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'code'), NULL) AS error_code,
-          if(JSONHas(response, 'errors') AND JSONExtractRaw(response, 'errors', 0) IS NOT NULL, JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'message'), NULL) AS error_message,
-          if(JSONHas(response, 'errors') AND JSONExtractRaw(response, 'errors', 0) IS NOT NULL, JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'type'), NULL) AS error_type,
-          if(JSONHas(response, 'errors') AND JSONExtractRaw(response, 'errors', 0) IS NOT NULL, JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'title'), NULL) AS error_title
+          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'code'), NULL) AS error_code,
+          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'message'), NULL) AS error_message,
+          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'type'), NULL) AS error_type,
+          if(JSONHas(response, 'errors'), JSONExtractString(JSONExtractRaw(response, 'errors', 0), 'title'), NULL) AS error_title
         FROM base_cte
       )
       SELECT 
