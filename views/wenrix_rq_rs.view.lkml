@@ -340,7 +340,7 @@ view: wenrix_rq_rs {
 
   measure: success_rate {
     type: number
-    sql: ${count_success} / NULLIF(${count}, 0) * 100.0 ;;
+    sql: ${count_success} / NULLIF(${count}, 0) ;;
     value_format_name: percent_2
     group_label: "6. Measures"
     label: "Success Rate"
