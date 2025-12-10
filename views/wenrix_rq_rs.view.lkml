@@ -3,9 +3,9 @@ view: wenrix_rq_rs {
   # Derived Table with CTEs for JSON extraction
   # base_cte computes ID once and includes request/response JSON for other CTEs to extract from
   derived_table: {
-    sql: 
+    sql:
       WITH base_cte AS (
-        SELECT 
+        SELECT
           toString(created_at) || '_' || toString(cityHash64(request)) || '_' || toString(cityHash64(response)) AS id,
           operation,
           result,
@@ -15,7 +15,7 @@ view: wenrix_rq_rs {
         FROM ota_reports.wenrix_rq_rs
       ),
       request_cte AS (
-        SELECT 
+        SELECT
           id,
           JSONExtractString(request, 'branch') AS request_branch,
           JSONExtractString(request, 'source') AS request_source,
@@ -24,7 +24,7 @@ view: wenrix_rq_rs {
         FROM base_cte
       ),
       response_meta_cte AS (
-        SELECT 
+        SELECT
           id,
           JSONExtractString(JSONExtractRaw(response, 'meta'), 'request_id') AS response_request_id,
           toInt32OrZero(JSONExtractString(JSONExtractRaw(response, 'meta'), 'status')) AS response_status,
@@ -33,7 +33,7 @@ view: wenrix_rq_rs {
         WHERE JSONHas(response, 'meta')
       ),
       response_data_cte AS (
-        SELECT 
+        SELECT
           id,
           JSONExtractString(JSONExtractRaw(response, 'data'), 'booking_reference') AS response_booking_reference,
           JSONExtractString(JSONExtractRaw(response, 'data'), 'quote_id') AS response_quote_id,
@@ -47,7 +47,7 @@ view: wenrix_rq_rs {
         WHERE JSONHas(response, 'data')
       ),
       errors_cte AS (
-        SELECT 
+        SELECT
           id,
           JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'code') AS error_code,
           JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'message') AS error_message,
@@ -56,7 +56,7 @@ view: wenrix_rq_rs {
         FROM base_cte
         WHERE JSONHas(response, 'errors')
       )
-      SELECT 
+      SELECT
         b.id,
         b.operation,
         b.result,
@@ -86,8 +86,6 @@ view: wenrix_rq_rs {
       LEFT JOIN response_data_cte rd ON b.id = rd.id
       LEFT JOIN errors_cte e ON b.id = e.id
     ;;
-    
-    sql_primary_key: id ;;
   }
 
   dimension: id {
@@ -343,7 +341,7 @@ view: wenrix_rq_rs {
   measure: success_rate {
     type: number
     sql: ${count_success} / NULLIF(${count}, 0) * 100.0 ;;
-    value_format_name: decimal_2
+    value_format_name: percent_2
     group_label: "6. Measures"
     label: "Success Rate"
     description: "Percentage of successful operations"
