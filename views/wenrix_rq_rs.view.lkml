@@ -103,10 +103,10 @@ view: wenrix_rq_rs {
 
   dimension: operation {
     type: string
-    sql: ${TABLE}.operation ;;
+    sql: arrayStringConcat(arraySlice(splitByChar('/', ${TABLE}.operation), -2), ' - ') ;;
     group_label: "1. Basic Dimensions"
     label: "Operation"
-    description: "The operation type performed (e.g., cancellation quote request)"
+    description: "The operation type performed (e.g., cancellation quote request). Extracts last two path segments formatted as 'segment1 - segment2'"
   }
 
   dimension: result {
