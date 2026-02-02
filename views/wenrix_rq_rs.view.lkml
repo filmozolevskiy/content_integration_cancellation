@@ -3,9 +3,9 @@ view: wenrix_rq_rs {
   # Derived Table with CTEs for JSON extraction
   # base_cte computes ID once and includes request/response JSON for other CTEs to extract from
   derived_table: {
-    sql:
+    sql: 
       WITH base_cte AS (
-        SELECT
+        SELECT 
           toString(created_at) || '_' || toString(cityHash64(request)) || '_' || toString(cityHash64(response)) AS id,
           operation,
           result,
@@ -15,7 +15,7 @@ view: wenrix_rq_rs {
         FROM ota_reports.wenrix_rq_rs
       ),
       request_cte AS (
-        SELECT
+        SELECT 
           id,
           JSONExtractString(request, 'branch') AS request_branch,
           JSONExtractString(request, 'source') AS request_source,
@@ -24,7 +24,7 @@ view: wenrix_rq_rs {
         FROM base_cte
       ),
       response_meta_cte AS (
-        SELECT
+        SELECT 
           id,
           JSONExtractString(JSONExtractRaw(response, 'meta'), 'request_id') AS response_request_id,
           toInt32OrZero(JSONExtractString(JSONExtractRaw(response, 'meta'), 'status')) AS response_status,
@@ -33,7 +33,7 @@ view: wenrix_rq_rs {
         WHERE JSONHas(response, 'meta')
       ),
       response_data_cte AS (
-        SELECT
+        SELECT 
           id,
           JSONExtractString(JSONExtractRaw(response, 'data'), 'booking_reference') AS response_booking_reference,
           JSONExtractString(JSONExtractRaw(response, 'data'), 'quote_id') AS response_quote_id,
@@ -47,7 +47,7 @@ view: wenrix_rq_rs {
         WHERE JSONHas(response, 'data')
       ),
       errors_cte AS (
-        SELECT
+        SELECT 
           id,
           JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'code') AS error_code,
           JSONExtractString(JSONExtractArrayRaw(response, 'errors')[1], 'message') AS error_message,
@@ -56,7 +56,7 @@ view: wenrix_rq_rs {
         FROM base_cte
         WHERE JSONHas(response, 'errors')
       )
-      SELECT
+      SELECT 
         b.id,
         b.operation,
         b.result,
@@ -281,34 +281,34 @@ view: wenrix_rq_rs {
 
   dimension: error_code {
     type: string
-    sql: ${TABLE}.error_code ;;
+    sql: if(${TABLE}.error_code IS NULL OR ${TABLE}.error_code = '', 'No error code available', ${TABLE}.error_code) ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Code"
-    description: "Error code from error response (first error)"
+    description: "Error code from error response (first error). Shows 'No error code available' when error code is missing."
   }
 
   dimension: error_message {
     type: string
-    sql: ${TABLE}.error_message ;;
+    sql: if(${TABLE}.error_message IS NULL OR ${TABLE}.error_message = '', 'No error message available', ${TABLE}.error_message) ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Message"
-    description: "Error message from error response (first error)"
+    description: "Error message from error response (first error). Shows 'No error message available' when error message is missing."
   }
 
   dimension: error_type {
     type: string
-    sql: ${TABLE}.error_type ;;
+    sql: if(${TABLE}.error_type IS NULL OR ${TABLE}.error_type = '', 'No error type available', ${TABLE}.error_type) ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Type"
-    description: "Error type from error response (first error)"
+    description: "Error type from error response (first error). Shows 'No error type available' when error type is missing."
   }
 
   dimension: error_title {
     type: string
-    sql: ${TABLE}.error_title ;;
+    sql: if(${TABLE}.error_title IS NULL OR ${TABLE}.error_title = '', 'No error title available', ${TABLE}.error_title) ;;
     group_label: "5. Response Error Dimensions"
     label: "Error Title"
-    description: "Error title from error response (first error)"
+    description: "Error title from error response (first error). Shows 'No error title available' when error title is missing."
   }
 
   # -------------------------
@@ -340,8 +340,8 @@ view: wenrix_rq_rs {
 
   measure: success_rate {
     type: number
-    sql: ${count_success} / NULLIF(${count}, 0) ;;
-    value_format_name: percent_2
+    sql: ${count_success} / NULLIF(${count}, 0) * 100.0 ;;
+    value_format_name: decimal_2
     group_label: "6. Measures"
     label: "Success Rate"
     description: "Percentage of successful operations"
