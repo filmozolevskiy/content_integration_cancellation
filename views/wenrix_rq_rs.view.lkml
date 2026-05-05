@@ -233,6 +233,7 @@ view: wenrix_rq_rs {
     group_label: "4. Response Success Dimensions"
     label: "Cancellation Type"
     description: "Cancellation type from successful response (e.g., voluntary, involuntary)"
+    suggestions: ["", "involuntary", "voluntary"]
   }
 
   dimension: response_refund_amount {
