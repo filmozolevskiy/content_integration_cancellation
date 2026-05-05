@@ -37,6 +37,7 @@ view: wenrix_rq_rs {
           id,
           JSONExtractString(JSONExtractRaw(response, 'data'), 'booking_reference') AS response_booking_reference,
           JSONExtractString(JSONExtractRaw(response, 'data'), 'quote_id') AS response_quote_id,
+          JSONExtractString(JSONExtractRaw(response, 'data'), 'cancellation_type') AS response_cancellation_type,
           if(JSONHas(JSONExtractRaw(response, 'data'), 'refund_amount'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'refund_amount'), 'amount')), 0.0) AS response_refund_amount,
           if(JSONHas(JSONExtractRaw(response, 'data'), 'refund_amount'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'refund_amount'), 'currency'), NULL) AS response_refund_currency,
           if(JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'amount')), 0.0) AS response_total_penalty,
@@ -70,6 +71,7 @@ view: wenrix_rq_rs {
         if(rm.response_timestamp_raw IS NULL OR rm.response_timestamp_raw = '' OR trim(rm.response_timestamp_raw) = '', NULL, parseDateTimeBestEffortOrZero(rm.response_timestamp_raw)) AS response_timestamp,
         rd.response_booking_reference,
         rd.response_quote_id,
+        rd.response_cancellation_type,
         rd.response_refund_amount,
         rd.response_refund_currency,
         rd.response_total_penalty,
@@ -223,6 +225,14 @@ view: wenrix_rq_rs {
     group_label: "4. Response Success Dimensions"
     label: "Quote ID"
     description: "Quote ID from successful response"
+  }
+
+  dimension: response_cancellation_type {
+    type: string
+    sql: ${TABLE}.response_cancellation_type ;;
+    group_label: "4. Response Success Dimensions"
+    label: "Cancellation Type"
+    description: "Cancellation type from successful response (e.g., voluntary, involuntary)"
   }
 
   dimension: response_refund_amount {
