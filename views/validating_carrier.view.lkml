@@ -9,7 +9,7 @@ view: validating_carrier {
         toString(booking_id) AS booking_id,
         argMax(airline_code, date_added) AS validating_carrier
       FROM ota_phoenix_v7.raw
-      WHERE day_added >= today() - 90
+      WHERE day_added >= today() - 365
       GROUP BY booking_id
     ;;
   }
