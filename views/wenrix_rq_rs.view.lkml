@@ -43,7 +43,8 @@ view: wenrix_rq_rs {
           if(JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), toFloat64OrZero(JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'amount')), 0.0) AS response_total_penalty,
           if(JSONHas(JSONExtractRaw(response, 'data'), 'total_penalty'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'total_penalty'), 'currency'), NULL) AS response_total_penalty_currency,
           JSONExtractString(JSONExtractRaw(response, 'data'), 'expires_at') AS response_expires_at_raw,
-          if(JSONHas(JSONExtractRaw(response, 'data'), 'labels'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'labels'), 'internal_id'), NULL) AS response_internal_id
+          if(JSONHas(JSONExtractRaw(response, 'data'), 'labels'), JSONExtractString(JSONExtractRaw(JSONExtractRaw(response, 'data'), 'labels'), 'internal_id'), NULL) AS response_internal_id,
+          JSONExtractString(JSONExtractRaw(response, 'data'), 'status') AS response_data_status
         FROM base_cte
         WHERE JSONHas(response, 'data')
       ),
@@ -78,6 +79,7 @@ view: wenrix_rq_rs {
         rd.response_total_penalty_currency,
         if(rd.response_expires_at_raw IS NULL OR rd.response_expires_at_raw = '' OR trim(rd.response_expires_at_raw) = '', NULL, parseDateTimeBestEffortOrZero(rd.response_expires_at_raw)) AS response_expires_at,
         rd.response_internal_id,
+        rd.response_data_status,
         e.error_code,
         e.error_message,
         e.error_type,
@@ -283,6 +285,14 @@ view: wenrix_rq_rs {
     group_label: "4. Response Success Dimensions"
     label: "Internal ID"
     description: "Internal booking ID from response labels"
+  }
+
+  dimension: status_from_response {
+    type: string
+    sql: ${TABLE}.response_data_status ;;
+    group_label: "4. Response Success Dimensions"
+    label: "Status From Response"
+    description: "Raw status string from response.data.status (e.g. 'success', 'failure'). Use when result column disagrees with the API-level status."
   }
 
   # -------------------------
